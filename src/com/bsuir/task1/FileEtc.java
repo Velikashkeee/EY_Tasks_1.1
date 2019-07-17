@@ -8,7 +8,9 @@ public class FileEtc {
 
     private static int delCount = 0;
 
+
     public static void combineFiles(String filesPath,int filesCount, String fileName, String delStr) throws IOException {
+        delCount = 0;
         //creating file that consists of other files in /com/bsuir/files
         File combinedFile = new File(filesPath+fileName+".txt");
         FileWriter writer = new FileWriter(combinedFile,false);

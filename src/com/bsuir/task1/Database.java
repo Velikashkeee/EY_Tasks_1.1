@@ -10,6 +10,7 @@ public class Database {
     private static final String URL =  "jdbc:mysql://localhost:3306/ey_task1_textfiles"+
                                         "?verifyServerCertificate=false"+
                                         "&useSSL=false"+
+                                        "&allowPublicKeyRetrieval=true"+
                                         "&requireSSL=false"+
                                         "&useLegacyDatetimeCode=false"+
                                         "&amp"+
@@ -41,7 +42,8 @@ public class Database {
 
     public static void importFiles(String filesPath, int filesCount) throws IOException {
 
-        remain = filesCount* FileGenerator.LINES_COUNT;
+        current = 0;
+        remain = filesCount* FileGenerator.LINES_COUNT - FileEtc.getDelCount();
 
         String line = null;
         String[] parsedData;
