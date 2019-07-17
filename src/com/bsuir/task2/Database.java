@@ -1,15 +1,13 @@
 package com.bsuir.task2;
 
+import com.mysql.cj.xdevapi.SqlDataResult;
 import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 
 public class Database {
@@ -56,12 +54,56 @@ public class Database {
         }
     }
 
-    public static void ExceltoSQL(String path){
+    public static void printExcel(){
+        // Stores all excel files stored in DB
+        ResultSet fileSet;
+        // Stores all classes of excel file
+        ResultSet classSet;
+        // Stores data of excel files
+        ResultSet dataSet;
+        try(Connection connection = DriverManager.getConnection(URL,USER,PASSWORD)){
+            try(Statement fileStatement = connection.createStatement()){
+                StringBuffer table = new StringBuffer();
+
+                fileSet = fileStatement.executeQuery("SELECT * FROM excel_files");
+                while (fileSet.next()){
+                    table.append(fileSet.getString("file_name")+"\n");
+                    table.append(fileSet.getString("bank_name") + "\n\t\t");
+                    table.append(fileSet.getString("balance_sheet")+"\n\t\t\t");
+                    table.append(fileSet.getString("period")+"\n");
+                    table.append(fileSet.getString("table_header") + "\t\t");
+                    try(Statement classStatement = connection.createStatement()){
+                        classSet = classStatement.executeQuery("SELECT class_name FROM classes WHERE file_name =\""+ fileSet.getString("file_name")+"\"");
+                        while (classSet.next()){
+                            table.append(classSet.getString("class_name") + "\n");
+                            try(Statement dataStatement = connection.createStatement()){
+                                dataSet = dataStatement.executeQuery("SELECT * FROM classes_data WHERE class_name =\""+classSet.getString("class_name")+"\" AND file_name =\"" + fileSet.getString("file_name")+"\"");
+                                while (dataSet.next()){
+                                    table.append(dataSet.getString("bank_account_id") + "\t");
+                                    table.append(dataSet.getDouble("open_balance_active") + "\t");
+                                    table.append(dataSet.getDouble("open_balance_passive") + "\t");
+                                    table.append(dataSet.getDouble("circulate_debit") + "\t");
+                                    table.append(dataSet.getDouble("circulate_credit")+ "\t");
+                                    table.append(dataSet.getDouble("close_balance_active") + "\t");
+                                    table.append(dataSet.getDouble("close_balance_passive") + "\n\t\t");
+                                }
+                            }
+                        }
+                    }
+                    table.append("\n\n\n");
+                }
+                System.out.println(table);
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+    public static void excelToSQL(String path){
         //isClassRow shows whether excel row contains class name or not
         boolean isClassRow = false;
 
-
-
+        String tableHeader = null;
         String bank = null;
         String balance = null;
         String period = null;
@@ -107,10 +149,30 @@ public class Database {
                             }
                         }
 
+                        //getting table header
+                        tableHeader = "";
+                        int firstRow = 6;
+                        int lastRow = 7;
+
+                        for (int j = firstRow; j <= lastRow; j++) {
+                            HSSFRow row = sheet.getRow(j);
+                            if (row != null){
+                                int firstCell = row.getFirstCellNum();
+                                int lastCell = row.getLastCellNum();
+                                for (int k = firstCell; k < lastCell; ++k) {
+                                    HSSFCell cell = row.getCell(k);
+                                    if (cell != null){
+                                        tableHeader += cell.getRichStringCellValue() + "\t\t";
+                                    }
+                                }
+                            }
+                            tableHeader += "\n\t";
+                        }
+
                         //Add excelFile with initialisation info(bankName, balance sheet, ..etc) to DB
 
                         try(Statement statement = connection.createStatement()){
-                            statement.executeUpdate("INSERT INTO ey_task2.excel_files (file_name, bank_name, balance_sheet, period) \n" + " VALUES (\"" + file.getName() + "\", \"" + bank + "\", \"" + balance + "\", \"" + period + "\");");
+                            statement.executeUpdate("INSERT INTO ey_task2.excel_files (file_name, bank_name, balance_sheet, period, table_header) \n" + " VALUES (\"" + file.getName() + "\", \"" + bank + "\", \"" + balance + "\", \"" + period + "\", \"" + tableHeader + "\");");
                         } catch (SQLException e){
                             e.printStackTrace();
                         }
