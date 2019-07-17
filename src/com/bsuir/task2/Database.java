@@ -8,6 +8,8 @@ import org.apache.poi.ss.usermodel.*;
 
 import java.io.*;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Database {
@@ -54,6 +56,27 @@ public class Database {
         }
     }
 
+    public static void printFilesList(List<String> filesList){
+        for (String file:filesList) {
+            System.out.println(file);
+        }
+    }
+
+    public static List<String> getFilesList(){
+        List<String> resultList = new ArrayList<>();
+        try(Connection connection = DriverManager.getConnection(URL,USER,PASSWORD)){
+            try (Statement statement = connection.createStatement()){
+                ResultSet resultSet = statement.executeQuery("SELECT file_name FROM excel_files");
+                while (resultSet.next()){
+                    resultList.add(resultSet.getString("file_name"));
+                }
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+        return resultList;
+    }
+
     public static void printExcel(){
         // Stores all excel files stored in DB
         ResultSet fileSet;
@@ -71,7 +94,7 @@ public class Database {
                     table.append(fileSet.getString("bank_name") + "\n\t\t");
                     table.append(fileSet.getString("balance_sheet")+"\n\t\t\t");
                     table.append(fileSet.getString("period")+"\n");
-                    table.append(fileSet.getString("table_header") + "\t\t");
+                    table.append(fileSet.getString("table_header"));
                     try(Statement classStatement = connection.createStatement()){
                         classSet = classStatement.executeQuery("SELECT class_name FROM classes WHERE file_name =\""+ fileSet.getString("file_name")+"\"");
                         while (classSet.next()){
@@ -85,7 +108,7 @@ public class Database {
                                     table.append(dataSet.getDouble("circulate_debit") + "\t");
                                     table.append(dataSet.getDouble("circulate_credit")+ "\t");
                                     table.append(dataSet.getDouble("close_balance_active") + "\t");
-                                    table.append(dataSet.getDouble("close_balance_passive") + "\n\t\t");
+                                    table.append(dataSet.getDouble("close_balance_passive") + "\n");
                                 }
                             }
                         }
