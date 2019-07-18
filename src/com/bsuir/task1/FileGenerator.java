@@ -8,7 +8,7 @@ public class FileGenerator {
 
     //number of lines in each file
 
-    public final static int LINES_COUNT = 200;
+    public final static int LINES_COUNT = 100;
 
     //creating 'count' files in given path
 

@@ -1,7 +1,5 @@
 package com.bsuir.task2;
 
-import com.mysql.cj.xdevapi.SqlDataResult;
-import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.*;
@@ -44,17 +42,6 @@ public class Database {
     private static double closingBalancePassive;
 
 
-    public static void ShowExcelFiles(String path){
-        try (InputStream inp = new FileInputStream(path)) {
-            HSSFWorkbook wb = new HSSFWorkbook(new POIFSFileSystem(inp));
-            ExcelExtractor extractor = new ExcelExtractor(wb);
-            extractor.setFormulasNotResults(false);
-            extractor.setIncludeSheetNames(false);
-            extractor.getText();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-    }
 
     public static void printFilesList(List<String> filesList){
         for (String file:filesList) {
@@ -84,10 +71,13 @@ public class Database {
         ResultSet classSet;
         // Stores data of excel files
         ResultSet dataSet;
+
+        //creating connection to DB
+
         try(Connection connection = DriverManager.getConnection(URL,USER,PASSWORD)){
             try(Statement fileStatement = connection.createStatement()){
                 StringBuffer table = new StringBuffer();
-
+                // getting all files stored in db
                 fileSet = fileStatement.executeQuery("SELECT * FROM excel_files");
                 while (fileSet.next()){
                     table.append(fileSet.getString("file_name")+"\n");
@@ -95,10 +85,12 @@ public class Database {
                     table.append(fileSet.getString("balance_sheet")+"\n\t\t\t");
                     table.append(fileSet.getString("period")+"\n");
                     table.append(fileSet.getString("table_header"));
+                    //getting all classes of file in db
                     try(Statement classStatement = connection.createStatement()){
                         classSet = classStatement.executeQuery("SELECT class_name FROM classes WHERE file_name =\""+ fileSet.getString("file_name")+"\"");
                         while (classSet.next()){
                             table.append(classSet.getString("class_name") + "\n");
+                            //getting all data rows of all classes of the file stored in DB
                             try(Statement dataStatement = connection.createStatement()){
                                 dataSet = dataStatement.executeQuery("SELECT * FROM classes_data WHERE class_name =\""+classSet.getString("class_name")+"\" AND file_name =\"" + fileSet.getString("file_name")+"\"");
                                 while (dataSet.next()){
