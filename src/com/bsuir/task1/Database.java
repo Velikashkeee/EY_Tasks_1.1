@@ -150,7 +150,7 @@ public class Database {
             }
 
             if ((rowCount != 0) && (rowCount % 2 != 0)){
-                while (resultSet.next()) {
+                if (resultSet.next()) {
                     if(resultSet.absolute(rowCount / 2))
                         result = resultSet.getDouble("real_number");
                 }
